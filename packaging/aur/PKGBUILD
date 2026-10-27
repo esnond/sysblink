@@ -1,0 +1,28 @@
+# aur pkgbuild for sysblink, adjust the url to where the project lives
+# not validated here, this host has no makepkg, check with namcap or makepkg
+
+pkgname=sysblink
+pkgver=1.0
+pkgrel=1
+pkgdesc='led system meters built from patches'
+arch=('any')
+url='https://github.com/esnond/sysblink'
+license=('MIT')
+depends=('python' 'gcc')
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+  cd "$srcdir"
+  install -Dm755 sysblink/sysblink.py "$pkgdir/usr/bin/sysblink"
+  install -Dm644 sysblink/engine.c "$pkgdir/usr/share/sysblink/engine.c"
+  install -Dm644 sysblink/readme.md "$pkgdir/usr/share/sysblink/readme.md"
+  install -Dm644 sysblink/readme.ru.md "$pkgdir/usr/share/sysblink/readme.ru.md"
+  install -Dm644 sysblink/sysblink.conf.example "$pkgdir/usr/share/sysblink/sysblink.conf.example"
+  for f in sysblink/patches/*; do
+    install -Dm644 "$f" "$pkgdir/usr/share/sysblink/${f#sysblink/}"
+  done
+  install -Dm644 sysblink/docs/patches.md "$pkgdir/usr/share/sysblink/docs/patches.md"
+  install -Dm644 sysblink/docs/patches.ru.md "$pkgdir/usr/share/sysblink/docs/patches.ru.md"
+  install -Dm644 sysblink/docs/sysblink.1 "$pkgdir/usr/share/man/man1/sysblink.1"
+}

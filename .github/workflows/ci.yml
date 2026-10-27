@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: build and test
+        run: |
+          make test 2>&1 | tee /tmp/suite.log
+          status=${PIPESTATUS[0]}
+          {
+            echo "### suite log tail"
+            echo '```'
+            tail -80 /tmp/suite.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - name: python syntax
+        run: python3 -m py_compile sysblink.py preview.py

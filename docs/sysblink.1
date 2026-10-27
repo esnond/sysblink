@@ -1,0 +1,77 @@
+.TH SYSBLINK 1 "2026" "sysblink 1.0" "User Commands"
+.SH NAME
+sysblink \- show system metrics on leds
+.SH SYNOPSIS
+.B sysblink.py
+.RI [ options ]
+.PP
+.B preview.py
+.I patch
+.RI [ options ]
+.SH DESCRIPTION
+.B sysblink
+builds small c daemons that show cpu, memory, swap, disk io, network
+traffic, temperature, battery charge or load average on sysfs leds and
+registers them with the detected init system. a patch is one c file in the
+patches directory, the installer inserts it into the engine template and
+compiles the result. the patch contract is described in docs/patches.md.
+.SH OPTIONS
+.TP
+.BR "\-\-lang " en|ru
+interface language
+.TP
+.B \-\-list_leds
+list writable leds and exit
+.TP
+.B \-\-list_patches
+list available patches and exit
+.TP
+.B \-\-list_inits
+list init backends, the detected one is marked
+.TP
+.BI "\-\-build " led,patch
+build a daemon for one led or a comma separated list of leds and one patch
+.TP
+.BI "\-\-hz " n
+update frequency in hertz, 1 to 100
+.TP
+.B \-\-install
+register the built daemon with the init system
+.TP
+.BI "\-\-init " backend
+use this backend instead of the detected one: systemd, openrc, runit, s6,
+sysvinit or none
+.TP
+.B \-\-remove
+remove one installed service
+.TP
+.B \-\-remove_all
+remove every installed service
+.TP
+.B \-\-version
+print the version and exit
+.PP
+.B preview.py
+runs a patch against a fake led and draws the level in the terminal,
+.B \-\-once
+prints one bar and exits, q quits the live view.
+.SH CONFIG
+defaults are read from sysblink.conf next to the installer: lang, hz, init,
+led, patch, disk and iface. disk pins the watched block device and iface
+pins the counted network interface, empty means the patch default. a flag
+on the command line beats the file.
+.SH FILES
+.TP
+.I /sys/class/leds/*
+leds the daemon writes to, the trigger file is switched to none at startup
+.TP
+.I /usr/local/bin/sysblink_*
+installed daemon binaries
+.TP
+.I /var/lib/sysblink/build
+build directory of the packaged installer
+.SH EXIT STATUS
+0 on success, 1 when the led cannot be opened or writes keep failing, so a
+supervising init system restarts the daemon.
+.SH SEE ALSO
+docs/patches.md, docs/patches.ru.md

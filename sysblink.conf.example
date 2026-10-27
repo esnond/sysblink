@@ -1,0 +1,23 @@
+# sysblink.conf example, copy it to sysblink.conf and trim to taste
+# every key is optional, a flag on the command line beats this file
+
+# interface language: en or ru
+lang = ru
+
+# daemon update frequency in hz, 1 to 100
+hz = 20
+
+# init backend: systemd, openrc, runit, s6, sysvinit or none
+# init = systemd
+
+# led to offer as the default in the interactive menu, one led name
+# led = input13::scrolllock
+
+# patch to offer as the default, with or without the .c suffix
+# patch = cpu
+
+# block device the disk patch watches, empty means the first real device
+# disk = nvme0n1
+
+# network interface the net patch counts, empty means every real one
+# iface = wlan0

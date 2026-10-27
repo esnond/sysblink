@@ -1,0 +1,20 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build the deb
+        run: VERSION=${GITHUB_REF_NAME#v} sh packaging/deb/build.sh
+      - name: publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/sysblink_*_all.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
