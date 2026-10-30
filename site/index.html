@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/style.css?v=1">
+<style>:root{--paper:#faf7f0;--card:#fffdf8;--ink:#3a3226;--mute:#7a7060;--crayon:#b07d2b;--hl:#f0e6cf;--line:#ddd2ba}
+</style>
 <title>sysblink: светодиод как индикатор системы</title>
 <meta name="description" content="sysblink собирает маленьких демонов на c99, которые показывают нагрузку процессора, памяти, диска, сети, температуру и заряд батареи на обычных светодиодах через sysfs.">
 <link rel="canonical" href="https://esnond.github.io/sysblink/">
@@ -11,67 +14,7 @@
 <meta property="og:image" content="https://esnond.github.io/sysblink/assets/mascot.jpg">
 <meta property="og:type" content="website">
 <link rel="icon" href="assets/mascot.jpg">
-<style>
-:root{--paper:#fbf6ec;--card:#fffdf6;--ink:#43323b;--mute:#7a6a70;--crayon:#9c2b47;--soft:#6f7d6a;--sky:#5b7d9e;--hl:#f4e7cd;--line:#d9cbb2}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.75 'Segoe Print','Bradley Hand','Comic Sans MS','Chalkboard SE',cursive}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(#d9cdb4 1.1px,transparent 1.4px);background-size:26px 26px;opacity:.5}
-a{color:var(--crayon);text-decoration:underline wavy rgba(156,43,71,.5);text-underline-offset:4px}
-a:hover{color:var(--ink)}
-.wrap{max-width:900px;margin:0 auto;padding:0 22px;position:relative}
-.sk{border:2.2px solid var(--ink);background:var(--card);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:3px 4px 0 rgba(67,50,59,.14)}
-.sk2{border-radius:18px 225px 18px 255px/255px 18px 225px 18px}
-.rot-l{transform:rotate(-.7deg)}
-.rot-r{transform:rotate(.6deg)}
-header{padding:52px 0 30px}
-.hero{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
-.mascot{width:172px;max-width:42vw;padding:10px;flex:none}
-.mascot img{width:100%;border-radius:12px;display:block;mix-blend-mode:multiply}
-h1{font-size:clamp(34px,6vw,52px);margin:0;line-height:1.15}
-h1 small{display:block;font-size:15px;color:var(--mute);margin-top:6px}
-.sub{margin:14px 0 0;font-size:16.5px;max-width:560px}
-.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
-.chip{font-size:12.5px;padding:3px 13px;border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:var(--card)}
-.chip.hot{border-color:var(--crayon);color:var(--crayon)}
-section{padding:42px 0}
-h2{font-size:26px;margin:0 0 8px}
-h2::after{content:"";display:block;width:190px;height:10px;margin-top:6px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='10' viewBox='0 0 190 10'%3E%3Cpath d='M2 6 Q 14 1 26 6 T 50 6 T 74 6 T 98 6 T 122 6 T 146 6 T 170 6 T 188 6' fill='none' stroke='%239c2b47' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center/190px 10px}
-h3{font-size:17px;margin:0 0 6px}
-.lead{color:var(--mute);font-size:15px;margin:0 0 22px}
-p{margin:0 0 14px}
-pre{font:13.5px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--card);border:2.2px solid var(--ink);border-radius:18px 225px 18px 255px/255px 18px 225px 18px;box-shadow:3px 4px 0 rgba(67,50,59,.14);padding:14px 16px;overflow-x:auto;margin:0 0 16px;white-space:pre}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--hl);padding:1px 5px;border-radius:6px;white-space:nowrap}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-.stat{padding:14px 16px;margin-bottom:4px}
-.stat b{display:block;font-size:23px;letter-spacing:.5px}
-.stat small{display:block;color:var(--mute);font-size:13px;line-height:1.5;margin-top:4px}
-.c-crayon b{color:var(--crayon)}
-.c-soft b{color:var(--soft)}
-.c-sky b{color:var(--sky)}
-.row{display:flex;gap:16px;margin:22px 0;align-items:flex-start}
-.row:nth-child(even){flex-direction:row-reverse}
-.ava{width:88px;flex:none;padding:6px}
-.ava img{width:100%;border-radius:10px;display:block;mix-blend-mode:multiply}
-.bubble{flex:1;padding:13px 18px}
-.q{font-weight:bold;color:var(--crayon);font-size:16px;margin:0 0 6px}
-.bubble p:last-child{margin-bottom:0}
-ol.rej{padding-left:24px}
-ol.rej li{margin:13px 0}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
-.ver{padding:18px 20px}
-.ver p{color:var(--mute);font-size:14.5px;margin:0 0 13px}
-.btn{display:inline-block;padding:6px 17px;font-size:14.5px;color:var(--paper);background:var(--crayon);border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;text-decoration:none;box-shadow:3px 4px 0 rgba(67,50,59,.14)}
-.btn:hover{filter:brightness(1.07);color:var(--paper)}
-.btn.alt{background:var(--soft)}
-.note{font-size:13.5px;color:var(--mute);margin-top:18px}
-footer{padding:30px 0 46px;color:var(--mute);font-size:14px}
-footer .sk{padding:14px 20px;margin-bottom:14px}
-footer a{color:var(--crayon)}
-@media (max-width:640px){
-.row,.row:nth-child(even){flex-direction:column}
-.ava{width:64px}
-}
-</style>
+
 </head>
 <body>
 
