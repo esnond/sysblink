@@ -10,6 +10,8 @@ patch watches, and it keeps doing it across reboots.
 
 written with ai assistance.
 
+project page: https://esnond.github.io/sysblink/
+
 ## requirements
 
 * linux with sysfs leds in /sys/class/leds
@@ -193,7 +195,11 @@ headless. the same suite runs on every push through github actions.
       tests/               headless checks, fixtures and python unit tests
       makefile             runs the checks
       packaging/           deb build script and an aur pkgbuild
-      .github/workflows/   ci on push, deb release on tags
+      site/                project page published to github pages
+      .github/workflows/   ci on push, pages deploy, deb release on tags
+      CHANGELOG.md         release history
+      CONTRIBUTING.md      how to build, test and send a patch
+      SECURITY.md          private reporting channel
 
 ## packaging
 

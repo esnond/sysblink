@@ -13,7 +13,7 @@ CFLAGS="-std=c99 -pedantic -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -O
 FIXTURES=$PWD/tests/fixtures
 MAX_VAL=255
 UNIT_MAX_VAL=100
-VERSION=1.0
+VERSION=$(cat VERSION 2>/dev/null || echo 1.0.0)
 
 insert_patch() {
     awk -v patchfile="$1" '

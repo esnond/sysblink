@@ -10,6 +10,8 @@ sysblink превращает свободный светодиод в живо�
 
 проект написан при помощи ии.
 
+страница проекта: https://esnond.github.io/sysblink/
+
 ## требования
 
 * linux со светодиодами sysfs в /sys/class/leds
@@ -193,7 +195,11 @@ tests/fixtures и ждут точных значений, например па�
       tests/                 headless проверки, фикстуры и тесты python
       makefile               запускает проверки
       packaging/             deb скрипт и pkgbuild для aur
-      .github/workflows/     ci на push, релиз deb по тегам
+      site/                  страница проекта для github pages
+      .github/workflows/     ci на push, деплой страницы, релиз deb по тегам
+      CHANGELOG.md           история версий
+      CONTRIBUTING.md        как собирать, тестировать и присылать патч
+      SECURITY.md            приватный канал для уязвимостей
 
 ## упаковка
 

@@ -4,7 +4,7 @@
 the installer lists the leds and patches it finds, renders the engine
 template with one patch, compiles it and optionally registers the binary
 with the init system it detects. a project local sysblink.conf holds defaults,
-see readme.md for the full picture.
+see README.md for the full picture.
 """
 
 import argparse
@@ -46,7 +46,16 @@ INITD_DIR = Path("/etc/init.d")
 RUNIT_SCANDIRS = ("/etc/service", "/var/service", "/run/runit/service")
 S6_SCANDIRS = ("/run/s6", "/etc/s6", "/var/run/s6")
 
-VERSION = "1.0"
+def read_version():
+    """the VERSION file next to the installer is the only source of truth."""
+    try:
+        text = (BASE_DIR / "VERSION").read_text().strip()
+    except OSError:
+        return "1.0.0"
+    return text or "1.0.0"
+
+
+VERSION = read_version()
 DEFAULT_HZ = 10
 MIN_HZ = 1
 MAX_HZ = 100
