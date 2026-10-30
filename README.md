@@ -12,6 +12,10 @@ written with ai assistance.
 
 project page: https://esnond.github.io/sysblink/
 
+status: running on a live laptop since 2026-10-30, two daemons under systemd at
+50 hz, zero restarts in the first 7 hours. other distributions and other leds
+are still untested.
+
 ## requirements
 
 * linux with sysfs leds in /sys/class/leds
