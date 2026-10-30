@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: security report
+    url: https://github.com/esnond/sysblink/security/advisories/new
+    about: приватный канал для уязвимостей, не публичный issue
+  - name: patch guide
+    url: https://github.com/esnond/sysblink/blob/main/docs/patches.md
+    about: как написать свой патч

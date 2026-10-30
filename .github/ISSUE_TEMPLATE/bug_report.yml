@@ -1,0 +1,55 @@
+name: bug report
+description: something broke, tell us what happened
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        спасибо за сообщение. чем больше фактов, тем быстрее починка.
+        если уязвимость, не пишите здесь, используйте security advisory.
+  - type: input
+    id: version
+    attributes:
+      label: version
+      description: вывод sysblink --version
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: system
+      description: дистрибутив, версия ядра, система инициализации
+      placeholder: debian 13, linux 6.12, systemd
+    validations:
+      required: true
+  - type: input
+    id: led
+    attributes:
+      label: led
+      description: имя диода из /sys/class/leds и значение max_brightness
+      placeholder: input13::scrolllock, max 1
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: steps to reproduce
+      description: команды по порядку
+      placeholder: |
+        python3 sysblink.py --build 'input13::scrolllock' cpu --hz 20
+        sudo python3 sysblink.py --build 'input13::scrolllock' cpu --install
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: actual behavior
+      description: тексты ошибок, вывод make test, логи службы
+    validations:
+      required: true
