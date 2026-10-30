@@ -1,61 +1,274 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sysblink: светодиод как приборка</title>
-<meta name="description" content="запасной светодиод машины показывает загрузку, память, диск, сеть или температуру. маленький c демон из шаблона.">
+<title>sysblink: светодиод как индикатор системы</title>
+<meta name="description" content="sysblink собирает маленьких демонов на c99, которые показывают нагрузку процессора, памяти, диска, сети, температуру и заряд батареи на обычных светодиодах через sysfs.">
+<link rel="canonical" href="https://esnond.github.io/sysblink/">
+<meta property="og:title" content="sysblink: светодиод как индикатор системы">
+<meta property="og:description" content="десять патчей, шесть систем инициализации, бинарник 16.7 кб, ноль внешних библиотек.">
+<meta property="og:image" content="https://esnond.github.io/sysblink/assets/mascot.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/mascot.jpg">
 <style>
-  :root{--paper:#faf7f0;--card:#fffdf8;--ink:#3a3226;--mute:#7a7060;--led:#b07d2b;--line:#ddd2ba}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);
-    font:17px/1.75 'Segoe Print','Bradley Hand','Comic Sans MS','Chalkboard SE',cursive}
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;
-    background-image:radial-gradient(#d8cdb2 1.1px,transparent 1.4px);background-size:26px 26px;opacity:.5}
-  .wrap{max-width:760px;margin:0 auto;padding:0 22px;position:relative}
-  a{color:var(--led);text-decoration:underline wavy rgba(176,125,43,.5);text-underline-offset:4px}
-  .sk{border:2.2px solid var(--ink);background:var(--card);
-    border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:3px 4px 0 rgba(58,50,38,.13)}
-  .rot-l{transform:rotate(-.6deg)} .rot-r{transform:rotate(.55deg)}
-  header{padding:52px 0 24px}
-  h1{font-size:clamp(30px,5vw,42px);margin:0}
-  h1 small{display:block;font-size:15px;color:var(--mute);margin-top:6px}
-  .led{display:inline-block;width:14px;height:14px;border-radius:50%;
-    border:2px solid var(--ink);background:var(--led);vertical-align:middle;animation:blink 2.1s infinite}
-  @keyframes blink{0%,45%{opacity:1}55%,100%{opacity:.25}}
-  section{padding:30px 0}
-  pre{background:#f1ead8;border:2px dashed var(--line);border-radius:12px;
-    padding:13px 16px;font:13px/1.6 monospace;overflow:auto}
-  p{margin:10px 0}
-  footer{padding:22px 0 42px;color:var(--mute);font-size:13.5px}
+:root{--paper:#fbf6ec;--card:#fffdf6;--ink:#43323b;--mute:#7a6a70;--crayon:#9c2b47;--soft:#6f7d6a;--sky:#5b7d9e;--hl:#f4e7cd;--line:#d9cbb2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.75 'Segoe Print','Bradley Hand','Comic Sans MS','Chalkboard SE',cursive}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(#d9cdb4 1.1px,transparent 1.4px);background-size:26px 26px;opacity:.5}
+a{color:var(--crayon);text-decoration:underline wavy rgba(156,43,71,.5);text-underline-offset:4px}
+a:hover{color:var(--ink)}
+.wrap{max-width:900px;margin:0 auto;padding:0 22px;position:relative}
+.sk{border:2.2px solid var(--ink);background:var(--card);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:3px 4px 0 rgba(67,50,59,.14)}
+.sk2{border-radius:18px 225px 18px 255px/255px 18px 225px 18px}
+.rot-l{transform:rotate(-.7deg)}
+.rot-r{transform:rotate(.6deg)}
+header{padding:52px 0 30px}
+.hero{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.mascot{width:172px;max-width:42vw;padding:10px;flex:none}
+.mascot img{width:100%;border-radius:12px;display:block;mix-blend-mode:multiply}
+h1{font-size:clamp(34px,6vw,52px);margin:0;line-height:1.15}
+h1 small{display:block;font-size:15px;color:var(--mute);margin-top:6px}
+.sub{margin:14px 0 0;font-size:16.5px;max-width:560px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.chip{font-size:12.5px;padding:3px 13px;border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:var(--card)}
+.chip.hot{border-color:var(--crayon);color:var(--crayon)}
+section{padding:42px 0}
+h2{font-size:26px;margin:0 0 8px}
+h2::after{content:"";display:block;width:190px;height:10px;margin-top:6px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='10' viewBox='0 0 190 10'%3E%3Cpath d='M2 6 Q 14 1 26 6 T 50 6 T 74 6 T 98 6 T 122 6 T 146 6 T 170 6 T 188 6' fill='none' stroke='%239c2b47' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center/190px 10px}
+h3{font-size:17px;margin:0 0 6px}
+.lead{color:var(--mute);font-size:15px;margin:0 0 22px}
+p{margin:0 0 14px}
+pre{font:13.5px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--card);border:2.2px solid var(--ink);border-radius:18px 225px 18px 255px/255px 18px 225px 18px;box-shadow:3px 4px 0 rgba(67,50,59,.14);padding:14px 16px;overflow-x:auto;margin:0 0 16px;white-space:pre}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--hl);padding:1px 5px;border-radius:6px;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.stat{padding:14px 16px;margin-bottom:4px}
+.stat b{display:block;font-size:23px;letter-spacing:.5px}
+.stat small{display:block;color:var(--mute);font-size:13px;line-height:1.5;margin-top:4px}
+.c-crayon b{color:var(--crayon)}
+.c-soft b{color:var(--soft)}
+.c-sky b{color:var(--sky)}
+.row{display:flex;gap:16px;margin:22px 0;align-items:flex-start}
+.row:nth-child(even){flex-direction:row-reverse}
+.ava{width:88px;flex:none;padding:6px}
+.ava img{width:100%;border-radius:10px;display:block;mix-blend-mode:multiply}
+.bubble{flex:1;padding:13px 18px}
+.q{font-weight:bold;color:var(--crayon);font-size:16px;margin:0 0 6px}
+.bubble p:last-child{margin-bottom:0}
+ol.rej{padding-left:24px}
+ol.rej li{margin:13px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
+.ver{padding:18px 20px}
+.ver p{color:var(--mute);font-size:14.5px;margin:0 0 13px}
+.btn{display:inline-block;padding:6px 17px;font-size:14.5px;color:var(--paper);background:var(--crayon);border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;text-decoration:none;box-shadow:3px 4px 0 rgba(67,50,59,.14)}
+.btn:hover{filter:brightness(1.07);color:var(--paper)}
+.btn.alt{background:var(--soft)}
+.note{font-size:13.5px;color:var(--mute);margin-top:18px}
+footer{padding:30px 0 46px;color:var(--mute);font-size:14px}
+footer .sk{padding:14px 20px;margin-bottom:14px}
+footer a{color:var(--crayon)}
+@media (max-width:640px){
+.row,.row:nth-child(even){flex-direction:column}
+.ava{width:64px}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
-    <h1>sysblink<span class="led"></span><small>запасной светодиод превращается в приборную панель</small></h1>
-  </div>
+<div class="wrap hero">
+<div class="mascot sk rot-l"><img src="assets/mascot.jpg" alt="волк, нарисованный восковым мелком: маскот sysblink"></div>
+<div>
+<h1>sysblink<small>светодиод, который показывает систему</small></h1>
+<p class="sub">sysblink собирает маленького демона на c99 из шаблона и одного патча. демон раз в тик читает метрику из <code>/proc</code> или <code>/sys</code> и пишет уровень яркости в обычный светодиод через sysfs. никаких библиотек, никакой сборки мусора, один бинарник и один цикл.</p>
+<div class="chips">
+<span class="chip">статус: v1.0.0</span>
+<span class="chip">проверено на ноутбуке</span>
+<span class="chip">linux, sysfs</span>
+<span class="chip">c99, без библиотек</span>
+<span class="chip">5 систем инициализации</span>
+<span class="chip">10 патчей</span>
+<span class="chip">лицензия mit</span>
+</div>
+</div>
+</div>
 </header>
 
+<div class="wrap">
+
 <section>
-  <div class="wrap">
-    <p>у каждой материнской платы и корпуса есть светодиоды, которые всю жизнь показывают одно и то же. sysblink забирает один из них и учит его полезному: загрузка процессора, память, диск, сеть, температура, что угодно, за чем следит патч.</p>
-    <p>выбираете диод и метрику, установщик собирает маленький c демон из шаблона и отдаёт его вашему init. после перезагрузки моргалка продолжает моргать осмысленно.</p>
-    <pre>sysblink install --led power --patch cpu
-sysblink list
-sysblink remove power</pre>
-    <p>написано с помощью ии, честно заявлено в readme. мигает по расписанию, как и всё в этом профиле.</p>
-  </div>
+<h2>что это</h2>
+<p class="lead">у ноутбука есть ряд светодиодов, которые обычно мигают только при нажатии caps lock. sysblink находит их в <code>/sys/class/leds</code>, дает выбрать один или несколько, компилирует под них демона и, если попросить, ставит его службой в систему инициализации.</p>
+<p>устройство простое: шаблон <code>engine.c</code> держит цикл, открытие файла яркости, обработку сигналов и масштабирование под максимум диода. патч это один файл c с единственной функцией <code>int get_led_value(void)</code>, которая возвращает уровень от 0 до 100. установщик подставляет патч в шаблон, подставляет пути диодов, частоту и компилирует результат в c99 с предупреждениями. строгий шлюз с pedantic и werror работает в тестах.</p>
+<pre>engine.c + patches/cpu.c + sysblink.conf
+        |
+        v
+cc -std=c99 -O2 -Wall -Wextra
+        |
+        v
+sysblink_input13_scrolllock   (16.7 кб)</pre>
+<p>исходник собранного демона остается в <code>build/</code>, поэтому видно ровно то, что работает на машине. это осознанно: никакой магии, никакой загрузки кода из сети, только текст, который можно прочитать.</p>
+</section>
+
+<section>
+<h2>зачем это</h2>
+<p class="lead">ядро умеет несколько готовых триггеров для светодиодов, но набор фиксирован и зависит от конфигурации ядра. sysblink дает любую метрику, которую можно прочитать из <code>/proc</code> или <code>/sys</code>, и работает там, где systemd нет.</p>
+<p>три сценария, ради которых это писалось. первый: ноутбук, у которого индикаторы блокировки простаивают, теперь показывает загрузку процессора или сеть, и вы смотрите на знакомые лампочки вместо отдельного окна с htop. второй: домашний сервер с openrc или runit, где готовые решения требуют systemd. третий: собственная метрика, которую никто не реализовал, от температуры батареи до числа ssh сессий, это один файл на сорок строк.</p>
+<p class="note">честная оговорка: если вам нужен ровно классический heartbeat или активность диска, есть шанс, что триггер ядра уже это умеет и sysblink не нужен. проект про произвольные метрики и про системы без systemd.</p>
+</section>
+
+<section>
+<h2>как пользоваться</h2>
+<p class="lead">три команды до первого мигания. сборка root не требует, sudo нужен только на шаге установки службы.</p>
+<pre>git clone https://github.com/esnond/sysblink
+cd sysblink
+python3 sysblink.py</pre>
+<p>установщик спросит язык, покажет диоды, покажет патчи, спросит частоту и соберет демона в <code>build/</code>. на вопрос о службе можно ответить нет и просто запустить бинарник руками.</p>
+<p>у каждого шага есть флаг, поэтому меню можно объехать полностью:</p>
+<pre>python3 sysblink.py --list_leds
+python3 sysblink.py --build 'input13::scrolllock' cpu --hz 20
+sudo python3 sysblink.py --build 'input13::scrolllock,input13::capslock' cpu --install
+sudo python3 sysblink.py --remove_all
+python3 sysblink.py --version</pre>
+<p>значения по умолчанию берутся из <code>sysblink.conf</code> рядом с установщиком, образец лежит в <code>sysblink.conf.example</code>. два ключа меняют источник: <code>disk</code> закрепляет блочное устройство, <code>iface</code> закрепляет сетевой интерфейс.</p>
+<pre>lang = ru
+hz = 20
+init = systemd
+led = input13::scrolllock
+patch = cpu
+disk = nvme0n1
+iface = wlan0</pre>
+<p>посмотреть патч до установки можно на фейковом диоде прямо в терминале:</p>
+<pre>python3 preview.py breathe --hz 60
+python3 preview.py cpu --hz 10 --once</pre>
+<p>после установки deb появляется man страница: <code>man sysblink</code>.</p>
+</section>
+
+<section>
+<h2>цифры</h2>
+<p class="lead">числа не взяты из головы. размер бинарника измерен на текущей сборке, память и процессор сняты с двух живых служб systemd после 7 часов работы при 50 гц.</p>
+<div class="grid">
+<div class="stat sk rot-l"><b class="c-crayon">10</b><small>патчей в поставке: cpu, mem, swap, disk, net, thermal, battery, loadavg, heartbeat, breathe</small></div>
+<div class="stat sk2 rot-r"><b class="c-sky">5 + none</b><small>бэкендов инициализации: systemd, openrc, runit, s6, sysvinit и режим без установки</small></div>
+<div class="stat sk2 rot-r"><b class="c-soft">25</b><small>автоматических проверок в make test, четыре вида: живые, фикстурные, runtime, python</small></div>
+<div class="stat sk rot-l"><b class="c-crayon">16.9 кб</b><small>бинарник одного демона с одним патчем, без внешних библиотек</small></div>
+<div class="stat sk rot-l"><b class="c-sky">240 кб</b><small>память службы по данным systemd после 7 часов, пик 1.9 мб на старте</small></div>
+<div class="stat sk2 rot-r"><b class="c-soft">1..100</b><small>герц, частота обновления, пороги патчей пересчитываются под нее</small></div>
+<div class="stat sk2 rot-r"><b class="c-crayon">0</b><small>внешних библиотек, только libc и заголовки ядра</small></div>
+<div class="stat sk rot-l"><b class="c-sky">2</b><small>языка документации и интерфейса, английский и русский</small></div>
+</div>
+</section>
+
+<section>
+<h2>как пятилетнему: вопросы и ответы</h2>
+<p class="lead">отвечает волк. он же маскот, он же автор.</p>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">что такое светодиод и при чем тут система?</p><p>это маленькая лампочка на корпусе. ядро linux отдает ее яркость как обычный файл: пишешь в него число, лампочка светится. значит любой показатель системы можно превратить в свечение, надо только вовремя писать число.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk2 rot-r"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk"><p class="q">что такое патч?</p><p>один файл c с функцией <code>get_led_value</code>, которая возвращает число от 0 до 100. все. патч не открывает диод, не спит и не ставит службы, этим занимается движок. поэтому свой патч пишется за вечер, а руководство с примером лежит в <code>docs/patches.md</code> и <code>docs/patches.ru.md</code>.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">почему не готовые триггеры ядра?</p><p>потому что их набор фиксирован и зависит от того, как собрано ядро, а мне нужна была своя метрика и работа без systemd. если вам хватает готового триггера, честно, используйте его, это дешевле.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk2 rot-r"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk"><p class="q">нужен ли root?</p><p>для сборки нет. демон сам пишет в <code>/sys/class/leds</code> при запуске, а это обычно только root. установка службы в <code>/etc</code> и <code>/usr/local/bin</code> тоже требует sudo. поэтому сборка отделена от установки явно.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">что будет, если диодом уже управляет ядро?</p><p>демон на старте пишет <code>none</code> в файл trigger своего диода, иначе триггер ядра перебивал бы записи яркости. после остановки демона триггер остается выключенным, вернуть его можно руками. это поведение описано в readme, потому что оно меняет настройку системы.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk2 rot-r"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk"><p class="q">а без systemd заработает?</p><p>да. есть openrc, runit, s6 с простой супервизией, классический sysvinit и режим без установки, когда бинарник просто лежит в build и запускается руками. поддержка пяти бэкендов и режима без установки и есть причина, почему проект вообще появился.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">сколько это ест?</p><p>бинарник 16.9 кб, память службы 240 кб, один тик это одно чтение файла в proc и одна короткая запись в sysfs. на живом ноутбуке при 50 гц два демона съели 0.76 процента одного ядра за 7 часов. при 10 гц это примерно в пять раз меньше.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk2 rot-r"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk"><p class="q">почему максимум диода не 255?</p><p>потому что он у всех разный. у клавиатурных индикаторов max_brightness часто равен 1, у подсветки бывает 255. демон масштабирует уровень под каждый диод отдельно, бинарный диод моргает по порогу 50 процентов, аналоговый плавно играет яркостью.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">это безопасно?</p><p>демон пишет только в brightness и trigger своих диодов, юнит systemd идет с ProtectSystem, ProtectHome и NoNewPrivileges, а в тестах код проходит шлюз c99 pedantic со всеми предупреждениями как ошибками. на живом ноутбуке два демона работают под systemd с 30 октября, ноль перезапусков за первые 7 часов. это не аудит безопасности, но это уже не обещание.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk2 rot-r"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk"><p class="q">кто это написал?</p><p>автор проекта при помощи ии. это написано в readme и повторяется здесь, потому что скрывать такой факт глупо, а проверить его легко.</p></div>
+</div>
+
+<div class="row">
+<div class="ava sk rot-l"><img src="assets/mascot.jpg" alt="волк"></div>
+<div class="bubble sk sk2"><p class="q">что дальше?</p><p>проверка на живом ноутбуке закрыта: capslock показывает процессор, numlock показывает батарею, оба на 50 гц. дальше тег v1.0.0, релиз deb через workflow и проверка на других дистрибутивах. список красивых идей по прежнему не публикую, пока не проверено хотя бы это.</p></div>
+</div>
+</section>
+
+<section>
+<h2>установка</h2>
+<div class="cards">
+<div class="ver sk rot-l">
+<h3>debian и ubuntu</h3>
+<p>пакет собран и проверен dpkg-deb на debian. ставит установщик, дерево, man страницу.</p>
+<pre>sh packaging/deb/build.sh
+sudo apt install ./build/sysblink_1.0.0_all.deb
+man sysblink</pre>
+</div>
+<div class="ver sk2 rot-r">
+<h3>arch</h3>
+<p>pkgbuild лежит в <code>packaging/aur/PKGBUILD</code>, но не проверялся: на машине автора нет makepkg. считайте его черновиком.</p>
+</div>
+<div class="ver sk rot-l">
+<h3>из исходников</h3>
+<p>нужны cc и python3. живое дерево, без установки, только сборка в build.</p>
+<pre>make test
+python3 sysblink.py</pre>
+</div>
+</div>
+</section>
+
+<section>
+<h2>что не проверено</h2>
+<p class="lead">этот раздел важнее остальных. он будет сокращаться только по мере реальных проверок.</p>
+<ol class="rej">
+<li>другие дистрибутивы и другие диоды: живая проверка прошла на одном ноутбуке, systemd и двух индикаторах input0.</li>
+<li>arch: pkgbuild не запускался, makepkg на машине разработки нет.</li>
+<li>s6 rc раскладки не подключены, поддержан только простой supervised каталог.</li>
+<li>калибровка disk и net подобрана вручную, пороги живут в <code>patches/config.h</code> и зависят от железа.</li>
+<li>battery ищет bat0, bat1 и batt, другие имена в sysfs он не увидит.</li>
+</ol>
+</section>
+
+<section>
+<h2>тесты</h2>
+<p class="lead">доказательства, а не обещания. make test гоняет 25 проверок четырех видов.</p>
+<p>живые собирают каждый патч с c99, pedantic и всеми предупреждениями как ошибками, затем запускают headless сессию против фейкового диода. фикстурные направляют движок на копии <code>/proc</code> и <code>/sys</code> и ждут точных значений, например память пишет ровно 75. runtime кормит демону <code>/dev/full</code> и требует выхода с кодом 1 после десяти неудачных записей. python проверки покрывают установщик, от разбора конфига до генерации файлов служб для всех пяти бэкендов.</p>
+<p>тот же набор запускается на каждый push через github actions, а по тегу собирается deb и уходит в releases.</p>
+<p><a class="btn" href="https://github.com/esnond/sysblink">исходники на github</a> <a class="btn alt" href="https://github.com/esnond/sysblink/actions">прогоны ci</a></p>
 </section>
 
 <footer>
-  <div class="wrap">
-    <div class="sk rot-l" style="display:inline-block;padding:12px 20px">
-      <a href="https://github.com/esnond/sysblink">github.com/esnond/sysblink</a> · сосед <a href="https://esnond.github.io/proteus/">proteus</a> и <a href="https://esnond.github.io/">профиль</a>
-    </div>
-  </div>
+<div class="sk rot-l">
+<p>sysblink это c99 и posix, без внешних библиотек. лицензия mit, полный текст в <a href="https://github.com/esnond/sysblink/blob/main/LICENSE">license</a>. документация: <a href="https://github.com/esnond/sysblink/blob/main/README.md">readme</a>, <a href="https://github.com/esnond/sysblink/blob/main/README.ru.md">readme по русски</a>, <a href="https://github.com/esnond/sysblink/blob/main/docs/patches.md">руководство по патчам</a>. изменения: <a href="https://github.com/esnond/sysblink/blob/main/CHANGELOG.md">changelog</a>. как сообщить об уязвимости: <a href="https://github.com/esnond/sysblink/blob/main/SECURITY.md">security</a>.</p>
+</div>
+<p>собрано честно, проверено headless.</p>
 </footer>
 
+</div>
 </body>
 </html>
